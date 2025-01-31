@@ -2,15 +2,19 @@ import { getBankBalance } from "@/actions/bankAccount";
 import { useState, useEffect } from "react";
 
 const useBankStats = () => {
-  const [balance, setBalance] = useState(null);
+  const [balance, setBalance] = useState({
+    totalBalance: 0,
+    totalExpenses: 0,
+    totalIncome: 0,
+    totalRemaingBalance: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const balanceData = await getBankBalance();
-        setBalance(balanceData);
+        const response = await getBankBalance();
+        setBalance(response);
       } catch (err) {
         setError(err);
       } finally {

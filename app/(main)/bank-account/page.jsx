@@ -88,7 +88,7 @@ const BankAccountsPage = () => {
       <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pl-3 pr-3 pb-1 md:pb-4">
         <QuickStatCard
           topTitle={"Total Balance"}
-          MainAmt={balance}
+          MainAmt={!loading && balance?.totalBalance}
           iconName={<DollarSign />}
           statsChange={"+3.4% Increase from last month."}
           statTextColor={"text-green-500"}
@@ -96,7 +96,7 @@ const BankAccountsPage = () => {
         />
         <QuickStatCard
           topTitle={"Monthly Income"}
-          MainAmt={balance}
+          MainAmt={!loading && balance?.totalExpenses}
           iconName={<CircleArrowUp color="blue" />}
           statsChange={"+3.4% Increase from last month."}
           statTextColor={"text-blue-500"}
@@ -104,7 +104,7 @@ const BankAccountsPage = () => {
         />
         <QuickStatCard
           topTitle={"Monthly Expense"}
-          MainAmt={balance}
+          MainAmt={!loading && balance?.totalIncome}
           iconName={<CircleArrowDown color="red" />}
           statsChange={"+3.4% Increase from last month."}
           statTextColor={"text-red-500"}
@@ -112,7 +112,7 @@ const BankAccountsPage = () => {
         />
         <QuickStatCard
           topTitle={"Income - Expense"}
-          MainAmt={balance}
+          MainAmt={!loading && balance.totalRemaingBalance}
           iconName={<TrendingUp />}
           statsChange={"+3.4% Increase from last month."}
           statTextColor={"text-purple-500"}

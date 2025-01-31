@@ -262,13 +262,93 @@ export async function getBankBalance() {
 
     // 3. Calculate total balance
     const totalBalance = bankAccounts.reduce(
-      (acc, account) => acc + account.openingBalance.toNumber(),
+      (acc, account) =>
+        acc + (account.openingBalance ? account.openingBalance.toNumber() : 0),
       0
     );
 
-    return totalBalance;
+    const totalExpense = await prisma.transaction.aggregate({
+      where: {
+        userId: user.id,
+        type: "EXPENSE",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const formatedExpenseSum = totalExpense._sum.amount
+      ? totalExpense._sum.amount.toNumber()
+      : 0;
+
+    const totalIncome = await prisma.transaction.aggregate({
+      where: { userId: user.id, type: "INCOME" },
+      _sum: { amount: true },
+    });
+
+    const formatedIncomeSum = totalIncome._sum.amount
+      ? totalIncome._sum.amount.toNumber()
+      : 0;
+
+    // 4. Calculate remaining balance
+    const totalRemaingBalance = formatedIncomeSum - formatedExpenseSum;
+
+    return {
+      totalBalance: totalBalance || 0,
+      totalExpense: formatedExpenseSum || 0,
+      totalIncome: formatedIncomeSum || 0,
+      totalRemaingBalance: totalRemaingBalance || 0,
+    };
   } catch (error) {
     console.error("Error getting bank balance:", error.message);
+    return null;
+  }
+}
+
+// get default bank account and other account with balance
+export async function getDefaultBankAccountWithBalance() {
+  try {
+    // 1. Check if user exists and is logged in
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized User!");
+
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    // 2. Get user bank accounts
+    const bankAccounts = await prisma.bankAccount.findMany({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    const serializedAccounts = bankAccounts.map((account) => ({
+      ...account,
+      openingBalance: account.openingBalance.toNumber(),
+      date: account.date.toISOString(),
+      createdAt: account.createdAt.toISOString(),
+      updatedAt: account.updatedAt.toISOString(),
+    }));
+
+    // 3. Get default bank account
+    const defaultAccount = bankAccounts.find((account) => account.isDefault);
+
+    if (!defaultAccount)
+      return {
+        success: false,
+        message: "Default account not found, Make one default account.",
+        data: null,
+      };
+
+    return {
+      defaultAccount,
+      otherAccounts: serializedAccounts || [],
+    };
+  } catch (error) {
+    console.error("Error getting default bank account:", error.message);
     return null;
   }
 }
