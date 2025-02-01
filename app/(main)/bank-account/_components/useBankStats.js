@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 const useBankStats = () => {
   const [balance, setBalance] = useState({
     totalBalance: 0,
-    totalExpenses: 0,
+    totalExpense: 0,
     totalIncome: 0,
     totalRemaingBalance: 0,
   });
@@ -14,6 +14,8 @@ const useBankStats = () => {
     const fetchBalance = async () => {
       try {
         const response = await getBankBalance();
+        console.log(typeof response.totalExpense);
+
         setBalance(response);
       } catch (err) {
         setError(err);

@@ -7,11 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Pen, Trash } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { updateDefaultAccount } from "@/actions/bankAccount";
 import useFetch from "@/hooks/use-Fetch";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const AccountCard = ({ account }) => {
   const { id, bankName, isDefault, openingBalance: balance } = account;
@@ -26,7 +27,7 @@ const AccountCard = ({ account }) => {
 
   return (
     <div>
-      <Card className="hover:shadow-md transition-shadow group relative">
+      <Card className="hover:shadow-xl transition-shadow group relative">
         <Link href={`/account/${id}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium capitalize">

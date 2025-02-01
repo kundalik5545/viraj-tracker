@@ -26,7 +26,7 @@ import { checkUser } from "@/actions/checkUser";
 
 const routes = [
   {
-    href: "/monthly-dashboard",
+    href: "/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
     description: "Overview of your finances",

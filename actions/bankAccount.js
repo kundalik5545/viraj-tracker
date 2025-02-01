@@ -268,13 +268,8 @@ export async function getBankBalance() {
     );
 
     const totalExpense = await prisma.transaction.aggregate({
-      where: {
-        userId: user.id,
-        type: "EXPENSE",
-      },
-      _sum: {
-        amount: true,
-      },
+      where: { userId: user.id, type: "EXPENSE" },
+      _sum: { amount: true },
     });
 
     const formatedExpenseSum = totalExpense._sum.amount
@@ -352,3 +347,141 @@ export async function getDefaultBankAccountWithBalance() {
     return null;
   }
 }
+
+//Delete bank account by id
+export const deleteBank = async (id) => {
+  try {
+    // 1. Check if user exists and is logged in
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized User!");
+
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    // 2. Check bank account exist or not
+    const existingBankAccount = await prisma.BankAccount.findUnique({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+    });
+
+    if (!existingBankAccount) throw new Error("Bank account not found");
+
+    // 2. Delete bank account
+    const bankAccount = await prisma.BankAccount.delete({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+    });
+
+    if (!bankAccount) throw new Error("Bank account not deleted");
+
+    return {
+      success: true,
+      message: "Bank account deleted successfully",
+      data: bankAccount,
+    };
+  } catch (error) {
+    console.error("Error getting investments:", error.message);
+    return {
+      success: false,
+      message: error.message || "Error during deleting bank account",
+      data: null,
+    };
+  }
+};
+
+//Edit bank account by id and data
+export const editBank = async (id, data) => {
+  try {
+    // 1. Check if user exists and is logged in
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized User!");
+
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    // 2. Check bank account exist or not
+    const existingBankAccount = await prisma.BankAccount.findUnique({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+    });
+
+    if (!existingBankAccount) throw new Error("Bank account not found");
+
+    // 3. Edit bank account
+    const bankAccount = await prisma.BankAccount.update({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+      data: {
+        bankName: data.bankName.toLowerCase(),
+        date: data.date,
+        openingBalance: data.openingBalance,
+        isDefault: data.isDefault,
+      },
+    });
+
+    if (!bankAccount) throw new Error("Bank account not updated");
+    //make transaction for updating bank account and account balance = > issue in logic
+    return {
+      success: true,
+      message: "Bank account updated successfully",
+      data: bankAccount,
+    };
+  } catch (error) {
+    console.error("Error getting investments:", error.message);
+    return {
+      success: false,
+      message: error.message || "Error during updating bank account",
+    };
+  }
+};
+
+// get bank account  details by id
+export const getBankAccountById = async (id) => {
+  try {
+    // 1. Check if user exists and is logged in
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized User!");
+
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    // 2. Check bank account exist or not
+    const existingBankAccount = await prisma.BankAccount.findUnique({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+    });
+
+    if (!existingBankAccount) throw new Error("Bank account not found");
+
+    return {
+      success: true,
+      message: "Bank account fetched successfully",
+      data: existingBankAccount,
+    };
+  } catch (error) {
+    console.error("Error getting investments:", error.message);
+    return {
+      success: false,
+      message: error.message || "Error during fetching bank account",
+    };
+  }
+};
