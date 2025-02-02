@@ -470,3 +470,14 @@ export const bankBalance = [
   { balanceType: "Total Expense", balance: -10000 },
   { balanceType: "Remainig Balance", balance: -10000 },
 ];
+
+export const expenseTrans1 = [
+  { type: "Housing", category: "🏠 Housing", amount: 15000, percentage: 30 },
+  {
+    type: "Transportation",
+    category: "🚗 Transportation",
+    amount: 3000,
+    percentage: 10,
+  },
+  { type: "Groceries", category: "🛒 Groceries", amount: 5000, percentage: 25 },
+];

@@ -1,11 +1,11 @@
-import { getExpenseCategory } from "@/actions/filterAction";
+import { getExpenseTransactions } from "@/actions/dashboard";
 
-export async function GET() {
-  const response = await getExpenseCategory();
+export async function POST(data) {
+  const response = await getExpenseTransactions(data);
   console.log(response);
 
   return Response.json({
-    totalRecords: response.data.totalRecords,
+    data: response,
     message: "Hello World!",
     success: true,
   });

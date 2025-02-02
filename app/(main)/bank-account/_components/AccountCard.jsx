@@ -1,4 +1,4 @@
-import React from "react";
+"use client";
 import {
   Card,
   CardContent,
@@ -12,10 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import { updateDefaultAccount } from "@/actions/bankAccount";
 import useFetch from "@/hooks/use-Fetch";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 const AccountCard = ({ account }) => {
   const { id, bankName, isDefault, openingBalance: balance } = account;
+
   const {
     loading: updateDefaultLoading,
     apiFun: updateDefaultFn,
@@ -23,22 +25,42 @@ const AccountCard = ({ account }) => {
     error,
   } = useFetch(updateDefaultAccount);
 
-  const handleDefaultChange = () => {};
+  const handleDefaultChange = async (bankAccountId) => {
+    // event.preventDefault();
+    if (isDefault) {
+      toast.warning("You need at least one default account");
+      return;
+    }
+    await updateDefaultFn(bankAccountId);
+  };
+
+  useEffect(() => {
+    if (updatedAccount && !updateDefaultLoading) {
+      toast.success("Default account updated successfully");
+    }
+  }, [updatedAccount]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message || "Failed to update default account");
+    }
+  }, [error]);
 
   return (
     <div>
       <Card className="hover:shadow-xl transition-shadow group relative">
-        <Link href={`/account/${id}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium capitalize">
-              {bankName}
-            </CardTitle>
-            <Switch
-              checked={isDefault}
-              onClick={handleDefaultChange}
-              disabled={updateDefaultLoading}
-            />
-          </CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium capitalize">
+            {bankName}
+          </CardTitle>
+          <Switch
+            checked={isDefault === true ? true : false}
+            onClick={() => handleDefaultChange(id)}
+            disabled={updateDefaultLoading}
+          />
+        </CardHeader>
+        {/* <Link href={`/account/${id}`}> */}
+        <Link href={`/bank/account/${id}`}>
           <CardContent>
             <div className="text-2xl font-bold">
               ${parseFloat(balance).toFixed(2)}

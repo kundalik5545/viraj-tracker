@@ -21,7 +21,6 @@ import QuickStatCard from "./_components/QuickStats";
 import useBankStats from "./_components/useBankStats";
 import BankBalanceBarChart from "./_components/BankBalanceBarChart";
 import BankBalanceDoughnutChart from "./_components/BankBalanceDougntPie";
-import { useAuth } from "@clerk/nextjs";
 const BankAccountsPage = () => {
   const [accounts, setAccounts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,7 +60,6 @@ const BankAccountsPage = () => {
 
   useEffect(() => {
     if (revalidatePage) {
-      fetchBankAccount();
       setRevalidatePage(false);
     }
     fetchBankAccount();

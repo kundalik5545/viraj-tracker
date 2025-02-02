@@ -1,3 +1,4 @@
+"use client";
 import { AuthGuard } from "@/components/auth-guard";
 import {
   CircleArrowDown,
@@ -11,7 +12,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -32,15 +33,18 @@ import QuickStatCard from "../bank-account/_components/QuickStats";
 import { expenseTrans, incomeTrans } from "@/data/Categories";
 import { formatCurrencyINR } from "@/lib/currencyFormatter";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { getExpenseTransactions } from "@/actions/dashboard";
 
 const filterPeriod = [
-  "Today",
-  "Last Week",
-  "Last Month",
-  "Last 3 Months",
-  "Last 6 Months",
-  "Last Year",
+  { period: "Today", value: 1 },
+  { period: "Last Week", value: 7 },
+  { period: "Last Month", value: 30 },
+  { period: "Last 3 Months", value: 90 },
+  { period: "Last 6 Months", value: 180 },
+  { period: "Last Year", value: 365 },
 ];
+
 const transactionStatusColors = {
   COMPLETED: "bg-blue-50 text-blue-500",
   PENDING: "bg-yellow-50 text-yellow-500",
@@ -61,35 +65,67 @@ const transactionAmountColors = {
 };
 
 const DashboardPage = () => {
+  const [transactionFilterDay, setTransactionFilterDay] = useState(30);
+  const [expenseTransactions, setExpenseTransactions] = useState({});
+  const [incomeTransactions, setIncomeTransactions] = useState({});
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [diffInIncomeExpense, setDiffInIncomeExpense] = useState(0);
+
   let bankBalance = 10000;
+
+  const handleTransactionFilter = (value) => {
+    setTransactionFilterDay(value);
+  };
+
+  const filterTransactions = async (transactionFilterDay) => {
+    const response = await getExpenseTransactions(transactionFilterDay);
+    setExpenseTransactions(response.expenseSummary);
+    setIncomeTransactions(response.incomeSummary);
+    setTotalIncome(response.totalIncomeAmount);
+    setTotalExpense(response.totalExpenseAmount);
+  };
+
+  // setDiffInIncomeExpense(totalIncome - totalExpense);
+  useEffect(() => {
+    setDiffInIncomeExpense(totalIncome - totalExpense);
+  }, [totalExpense, totalIncome]);
+
+  useEffect(() => {
+    filterTransactions(transactionFilterDay);
+  }, [transactionFilterDay]);
+
   return (
     <AuthGuard>
-      <div className="container mx-auto p-2 md:p-3 pt-4 md:pt-2  ">
+      <div className="container mx-auto p-2 md:p-3 pt-[70px] md:pt-2  ">
         {/* Header Section */}
-        <section className="flex items-center justify-between mb-2">
+        <section className=" flex items-center justify-between mb-2">
           <h2 className="flex items-center gradient-subTitle text-3xl space-x-3">
             <span className="bg-blue-100 rounded-full p-2 shadow-lg">
               <FileChartColumn color="black" size={25} />
             </span>
             <span>Dashboard</span>
           </h2>
-          <Select className="bg-black">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={"Monthly"} />
-            </SelectTrigger>
-            <SelectContent>
-              {filterPeriod.map((item, index) => {
-                return (
-                  <SelectItem key={index} value={item}>
-                    {item}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <div className="hidden md:flex items-center space-x-2">
+            <Select onValueChange={(value) => handleTransactionFilter(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={"Monthly"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filterPeriod.map((item, index) => {
+                  return (
+                    <SelectItem key={index} value={item.value}>
+                      {item.period}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
         </section>
         <hr className="mb-2" />
 
+        {/* quick stats */}
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pl-3 pr-3 pb-1 md:pb-4">
           <QuickStatCard
             topTitle={"Total Balance"}
@@ -101,7 +137,7 @@ const DashboardPage = () => {
           />
           <QuickStatCard
             topTitle={"Monthly Income"}
-            MainAmt={bankBalance}
+            MainAmt={totalIncome}
             iconName={<CircleArrowUp color="blue" />}
             statsChange={"+3.4% Increase from last month."}
             statTextColor={"text-blue-500"}
@@ -109,7 +145,7 @@ const DashboardPage = () => {
           />
           <QuickStatCard
             topTitle={"Monthly Expense"}
-            MainAmt={bankBalance}
+            MainAmt={totalExpense}
             iconName={<CircleArrowDown color="red" />}
             statsChange={"+3.4% Increase from last month."}
             statTextColor={"text-red-500"}
@@ -117,7 +153,7 @@ const DashboardPage = () => {
           />
           <QuickStatCard
             topTitle={"Income - Expense"}
-            MainAmt={bankBalance}
+            MainAmt={diffInIncomeExpense}
             iconName={<TrendingUp />}
             statsChange={"+3.4% Increase from last month."}
             statTextColor={"text-purple-500"}
@@ -128,12 +164,12 @@ const DashboardPage = () => {
         {/* Expense Transaction with category and percentage of total transaction
           for the selected period */}
         <div className="mb-2">
-          <h3 className="text-3xl gradient-subTitle mt-2">
-            # Expense Transaction
-          </h3>
           <div className="flex flex-wrap justify-center gap-3">
             {/* Expense */}
             <section className="w-full md:w-[calc(50%-6px)]">
+              <h3 className="text-3xl gradient-subTitle mt-2">
+                # Expense Transaction
+              </h3>
               <Table className="mt-2">
                 <TableHeader>
                   <TableRow className="bg-gray-100">
@@ -146,26 +182,27 @@ const DashboardPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenseTrans.map((data, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{data.category}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrencyINR(data.amount)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {data.percentage}%
-                      </TableCell>
-                      <TableCell>
-                        <Progress value={data.progress} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {expenseTransactions.length > 0 &&
+                    expenseTransactions?.map((data, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{data.category}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrencyINR(data.amount)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {data.percentage}%
+                        </TableCell>
+                        <TableCell>
+                          <Progress value={data.percentage} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={1}>Total</TableCell>
                     <TableCell className="text-right">
-                      {formatCurrencyINR(23450)}
+                      {formatCurrencyINR(totalExpense)}
                     </TableCell>
                     <TableCell colSpan={1} className="text-right">
                       100.00%
@@ -175,9 +212,11 @@ const DashboardPage = () => {
                 </TableFooter>
               </Table>
             </section>
-
             {/* Income */}
             <section className="w-full md:w-[calc(50%-6px)]">
+              <h3 className="text-3xl gradient-subTitle mt-2">
+                # Income Trnsactions
+              </h3>
               <Table className="mt-2">
                 <TableHeader>
                   <TableRow className="bg-gray-100">
@@ -190,26 +229,27 @@ const DashboardPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {incomeTrans.map((data, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{data.category}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrencyINR(data.amount)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {data.percentage}%
-                      </TableCell>
-                      <TableCell>
-                        <Progress value={data.progress} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {incomeTransactions.length > 0 &&
+                    incomeTransactions.map((data, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{data.category}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrencyINR(data.amount)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {data.percentage}%
+                        </TableCell>
+                        <TableCell>
+                          <Progress value={data.percentage} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={1}>Total</TableCell>
                     <TableCell className="text-right">
-                      {formatCurrencyINR(73450)}
+                      {formatCurrencyINR(totalIncome)}
                     </TableCell>
                     <TableCell colSpan={1} className="text-right">
                       100.00%

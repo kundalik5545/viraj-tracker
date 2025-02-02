@@ -175,7 +175,7 @@ export const getBankAccount = async (page = 1) => {
 };
 
 // Update Default Bank Account
-export async function updateDefaultAccount(data) {
+export async function updateDefaultAccount(bankAccountId) {
   try {
     // 1. Check if user exists and is logged in
     const { userId } = await auth();
@@ -187,20 +187,11 @@ export async function updateDefaultAccount(data) {
 
     if (!user) throw new Error("User not found");
 
-    // 2. Check incoming data and types
-    if (
-      !data ||
-      typeof data.bankAccountId !== "number" ||
-      typeof data.isDefault !== "boolean"
-    ) {
-      throw new Error("Please check the provoided data types.");
-    }
-
     // 3. Check bank account exists
     const existingBankAccount = await prisma.bankAccount.findFirst({
       where: {
         userId: user.id,
-        id: data.bankAccountId,
+        id: bankAccountId,
       },
     });
 
@@ -211,11 +202,28 @@ export async function updateDefaultAccount(data) {
         data: null,
       };
 
+    //4. Make all other account not default
+    const updatedOtherAccounts = await prisma.bankAccount.updateMany({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        isDefault: false,
+      },
+    });
+
+    if (!updatedOtherAccounts)
+      return {
+        success: false,
+        message: "Other accounts not updated",
+        data: null,
+      };
+
     // 4. Update the default account
     const updatedAccount = await prisma.bankAccount.update({
-      where: { id: data.bankAccountId },
+      where: { id: bankAccountId },
       data: {
-        isDefault: data.isDefault,
+        isDefault: true,
       },
     });
 
@@ -226,6 +234,7 @@ export async function updateDefaultAccount(data) {
         data: null,
       };
 
+    revalidatePath("/bank-account");
     return {
       success: true,
       message: "Default account updated successfully",
@@ -434,11 +443,16 @@ export const editBank = async (id, data) => {
     });
 
     if (!bankAccount) throw new Error("Bank account not updated");
+
+    const formatedBankDetails = {
+      ...bankAccount,
+      openingBalance: bankAccount.openingBalance.toNumber(),
+    };
     //make transaction for updating bank account and account balance = > issue in logic
     return {
       success: true,
       message: "Bank account updated successfully",
-      data: bankAccount,
+      data: formatedBankDetails,
     };
   } catch (error) {
     console.error("Error getting investments:", error.message);
@@ -472,10 +486,15 @@ export const getBankAccountById = async (id) => {
 
     if (!existingBankAccount) throw new Error("Bank account not found");
 
+    const formatedBankDetails = {
+      ...existingBankAccount,
+      openingBalance: existingBankAccount.openingBalance.toNumber(),
+    };
+
     return {
       success: true,
       message: "Bank account fetched successfully",
-      data: existingBankAccount,
+      data: formatedBankDetails,
     };
   } catch (error) {
     console.error("Error getting investments:", error.message);

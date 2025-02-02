@@ -14,8 +14,6 @@ const useBankStats = () => {
     const fetchBalance = async () => {
       try {
         const response = await getBankBalance();
-        console.log(typeof response.totalExpense);
-
         setBalance(response);
       } catch (err) {
         setError(err);

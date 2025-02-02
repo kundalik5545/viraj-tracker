@@ -24,8 +24,6 @@ const BankBalanceBarChart = ({ balance }) => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
 
-  console.log(balance);
-
   useEffect(() => {
     if (!chartRef.current) return;
 
